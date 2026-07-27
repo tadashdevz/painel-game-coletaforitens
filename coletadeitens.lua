@@ -1089,13 +1089,22 @@ local C = {
 -- ══════════════════════════════════════════════════
 --  GUI · Painel System Farm (coluna única com scroll)
 -- ══════════════════════════════════════════════════
+local guiParent = (typeof(gethui) == "function" and gethui())
+                  or LocalPlayer:WaitForChild("PlayerGui")
+
+-- Remove qualquer painel de uma execução anterior do script (evita
+-- ficar com 2+ cópias sobrepostas/desalinhadas na tela ao reexecutar).
+local oldGui = guiParent:FindFirstChild("PainelSystemFarm")
+if oldGui then
+    oldGui:Destroy()
+end
+
 local Gui = Instance.new("ScreenGui")
 Gui.Name           = "PainelSystemFarm"
 Gui.ResetOnSpawn   = false
 Gui.IgnoreGuiInset = true
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-Gui.Parent         = (typeof(gethui) == "function" and gethui())
-                     or LocalPlayer:WaitForChild("PlayerGui")
+Gui.Parent         = guiParent
 
 local PANEL_W, PANEL_H = 700, 450
 local SIDEBAR_W = 100
