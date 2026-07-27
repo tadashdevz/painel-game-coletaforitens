@@ -4,6 +4,7 @@
 -- ║   Auto Ataque + Skills + Auto Quest + Quest Mais Alta         ║
 -- ║   + Auto Coletar Drop (filtro de raridade)                    ║
 -- ║   + Agrupar Mobs + Hitbox Expander (5-25 studs)              ║
+-- ║   + Farm Masmora (ataca qualquer mob presente, sem TP)        ║
 -- ║   Quest Mais Alta: busca automaticamente a quest de maior    ║
 -- ║   level requerido disponível para o level do jogador         ║
 -- ╚══════════════════════════════════════════════════════════════╝
@@ -370,6 +371,7 @@ local cfg = {
     hitboxSize        = 10,    -- tamanho da hitbox dos mobs (padrão 10)
     hitboxAuto        = true,  -- hitbox automática baseada no tipo de mob
     forgeUseProtection = true, -- usa Forgeguard automaticamente quando disponível
+    farmDungeon       = false, -- Farm Masmora: ataca QUALQUER mob presente (dentro da dungeon/torre)
 }
 
 -- ══════════════════════════════════════════════════
@@ -1952,7 +1954,7 @@ end -- fim do bloco Bring Mob
 --  AUTOMAÇÃO (toggles em grid vertical) (com borda)
 -- ══════════════════════════════════════════════════
 do
-local TogglesCard = makeCard(140, "Automação", true)
+local TogglesCard = makeCard(155, "Automação", true)
 
 local function makeToggleSlot(parent, y, label, key, onToggled)
     local lbl = Instance.new("TextLabel", parent)
@@ -1995,11 +1997,21 @@ local function makeToggleSlot(parent, y, label, key, onToggled)
     return pill, knob
 end
 
+local farmDungeonPill, farmDungeonKnob -- referenciados pelo toggle "Quest Mais Alta" abaixo
+
 makeToggleSlot(TogglesCard, 16, "Ataque", "autoAttack")
 makeToggleSlot(TogglesCard, 42, "Skills", "autoSkills")
 makeToggleSlot(TogglesCard, 68, "Coletar Drop", "autoCollect")
 makeToggleSlot(TogglesCard, 94, "Quest Mais Alta", "autoQuestHighest", function(enabled)
     if enabled then
+        -- Quest Mais Alta e Farm Masmora são mutuamente exclusivos
+        cfg.farmDungeon = false
+        if farmDungeonPill then
+            farmDungeonPill.BackgroundColor3 = C.off
+            farmDungeonKnob.Position         = UDim2.fromOffset(3, 3)
+            farmDungeonKnob.BackgroundColor3 = C.knobOff
+        end
+
         -- Quando ativado, pega a quest mais alta IMEDIATAMENTE
         -- (e já aceita ela no servidor via startQuestFarm)
         local lvl = getPlayerLevel()
@@ -2012,6 +2024,30 @@ makeToggleSlot(TogglesCard, 94, "Quest Mais Alta", "autoQuestHighest", function(
         -- Quando desativado, limpa a quest atual
         currentQuestMob = nil
         currentQuestId  = nil
+    end
+end)
+farmDungeonPill, farmDungeonKnob = makeToggleSlot(TogglesCard, 120, "Farm Masmora", "farmDungeon", function(enabled)
+    if enabled then
+        -- Farm Masmora e Quest Mais Alta são mutuamente exclusivos
+        cfg.autoQuestHighest = false
+        currentQuestMob = nil
+        currentQuestId  = nil
+
+        -- Limpa qualquer seleção de mob/quest manual
+        if SelectorText then
+            SelectorText.Text = "Selecionar mob..."
+            SelectorText.TextColor3 = C.dim
+        end
+        if QuestSelectorText then
+            QuestSelectorText.Text = "Selecionar quest..."
+            QuestSelectorText.TextColor3 = C.dim
+        end
+
+        -- Farma QUALQUER mob vivo, sem checar/trocar mundo (a masmora
+        -- não é um dos mundos normais registrados em WORLD_MIN_LV)
+        startFarm({ name = nil, world = nil }, "Farm Masmora")
+    else
+        stopFarm()
     end
 end)
 end -- fim do bloco Automação
