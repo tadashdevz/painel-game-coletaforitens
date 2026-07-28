@@ -1266,9 +1266,14 @@ Sidebar.Position         = UDim2.new(0, 0, 0, 52)
 Sidebar.BackgroundColor3 = C.sidebar
 Sidebar.BorderSizePixel  = 0
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 8)
-local SidebarFix = Instance.new("Frame", Sidebar)
-SidebarFix.Size             = UDim2.new(0, 10, 1, 0)
-SidebarFix.Position         = UDim2.new(1, -10, 0, 0)
+
+-- Retângulo decorativo pra "quadrar" o canto direito da Sidebar (fica
+-- parentado em Main, e não em Sidebar, porque Sidebar usa UIListLayout
+-- e qualquer Frame filho dela entraria na lista e empurraria os botões
+-- de tab para baixo — foi exatamente esse o bug do layout quebrado).
+local SidebarFix = Instance.new("Frame", Main)
+SidebarFix.Size             = UDim2.new(0, 10, 1, -52)
+SidebarFix.Position         = UDim2.new(0, SIDEBAR_W - 10, 0, 52)
 SidebarFix.BackgroundColor3 = C.sidebar
 SidebarFix.BorderSizePixel  = 0
 
